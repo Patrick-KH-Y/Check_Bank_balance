@@ -5,183 +5,222 @@ import DashboardHomeCards from '@/components/dashboard/DashboardHomeCards';
 import IncomeExpenseChart from '@/components/dashboard/IncomeExpenseChart';
 import SavingsTrendChart from '@/components/dashboard/SavingsTrendChart';
 import AccountBalanceChart from '@/components/dashboard/AccountBalanceChart';
-import IncomeForm from '@/components/forms/IncomeForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Wallet, TrendingUp, PiggyBank, BarChart3 } from 'lucide-react';
+import { Wallet, TrendingUp, PiggyBank, BarChart3, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useCurrentMonthDashboard } from '@/hooks/useDashboardData';
-
-// 임시 데이터 (나중에 실제 데이터베이스로 교체)
-const mockData = {
-  currentMonth: {
-    year: 2025,
-    month: 9,
-    경훈_월급: 5000000,
-    선화_월급: 6000000,
-    totalIncome: 11000000,
-    expenses: 8000000,
-    savings: 3000000,
-  },
-  previousMonth: {
-    totalIncome: 10500000,
-    expenses: 7500000,
-    savings: 3000000,
-  }
-};
+import { useExpenses } from '@/hooks/useExpenses';
+import { useIncome } from '@/hooks/useIncome';
+import { useAccounts } from '@/hooks/useAccounts';
+import { useRouter } from 'next/navigation';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Home() {
   const { toast } = useToast();
-  const [showIncomeForm, setShowIncomeForm] = useState(false);
-  const [incomeData, setIncomeData] = useState(mockData.currentMonth);
+  const router = useRouter();
+  const [currentYear, setCurrentYear] = useState(2025);
+  const [currentMonth, setCurrentMonth] = useState(9);
   
   // 임시 사용자 ID (실제로는 인증 시스템에서 가져와야 함)
   const tempUserId = 'temp-user-123';
-  // const { dashboardData, financialMetrics, loading, error } = useCurrentMonthDashboard(tempUserId);
+
+  // 현재 월의 데이터 조회
+  const { data: currentExpenses, isLoading: expensesLoading, error: expensesError } = useExpenses(tempUserId, currentYear, currentMonth);
+  const { data: currentIncome, isLoading: incomeLoading, error: incomeError } = useIncome(tempUserId, currentYear, currentMonth);
+  const { data: accounts, isLoading: accountsLoading, error: accountsError } = useAccounts(currentYear, currentMonth);
+
+  // 이전 월 데이터 조회 (차트 비교용)
+  const { data: previousExpenses } = useExpenses(tempUserId, currentYear, currentMonth - 1);
+  const { data: previousIncome } = useIncome(tempUserId, currentYear, currentMonth - 1);
+
+  // 더 많은 월 데이터 조회 (현재 월 포함 과거 6개월)
+  const getRecentMonths = () => {
+    const months = [];
+    for (let i = 0; i < 6; i++) {
+      const targetMonth = currentMonth - i;
+      const targetYear = currentYear;
+      let year = targetYear;
+      let month = targetMonth;
+      
+      if (targetMonth < 1) {
+        month = targetMonth + 12;
+        year = targetYear - 1;
+      }
+      
+      months.push({ year, month });
+    }
+    // 최신 월부터 오래된 월 순으로 정렬 (현재 월이 맨 오른쪽)
+    return months.reverse();
+  };
+
+  const recentMonths = getRecentMonths();
   
-  // 임시로 더미 데이터 사용 (데이터베이스 연결 문제 해결 후 실제 데이터 사용)
+  // 최근 6개월 데이터 조회
+  const recentExpensesQueries = recentMonths.map(({ year, month }) => 
+    useExpenses(tempUserId, year, month)
+  );
+  const recentIncomeQueries = recentMonths.map(({ year, month }) => 
+    useIncome(tempUserId, year, month)
+  );
+
+  // 데이터 로딩 상태
+  const loading = expensesLoading || incomeLoading || accountsLoading;
+  const error = expensesError || incomeError || accountsError;
+
+  // 실제 데이터가 있는지 확인
+  const hasRealData = currentIncome || currentExpenses || (accounts && accounts.length > 0);
+
+  // 대시보드 데이터 구성
   const dashboardData = {
-    monthly_income: {
+    monthly_income: currentIncome || {
       id: 'temp-1',
       user_id: tempUserId,
-      year: 2025,
-      month: 9,
-      경훈_월급: 5000000,
-      선화_월급: 6000000,
+      year: currentYear,
+      month: currentMonth,
+      경훈_월급: 0,
+      선화_월급: 0,
       other_income: 0,
-      total_income: 11000000,
+      total_income: 0,
       notes: '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
-    monthly_expenses: {
+    monthly_expenses: currentExpenses || {
       id: 'temp-2',
       user_id: tempUserId,
-      year: 2025,
-      month: 9,
-      housing: 2000000,
-      food: 1500000,
-      transportation: 500000,
-      utilities: 300000,
-      healthcare: 200000,
-      entertainment: 300000,
-      other_expenses: 200000,
-      total_expenses: 5000000,
+      year: currentYear,
+      month: currentMonth,
+      housing: 0,
+      food: 0,
+      transportation: 0,
+      utilities: 0,
+      healthcare: 0,
+      entertainment: 0,
+      other_expenses: 0,
+      total_expenses: 0,
       notes: '',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
-    accounts: [
-      {
-        id: 'temp-3',
-        user_id: tempUserId,
-        account_name: '주거래은행',
-        account_type: 'checking' as const,
-        balance: 15000000,
-        currency: 'KRW',
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        id: 'temp-4',
-        user_id: tempUserId,
-        account_name: '저축은행',
-        account_type: 'savings' as const,
-        balance: 50000000,
-        currency: 'KRW',
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }
-    ],
+    accounts: accounts || [],
     summary: {
-      total_income: 11000000,
-      total_expenses: 5000000,
-      total_savings: 6000000,
-      savings_rate: 54.5,
+      total_income: currentIncome?.total_income || 0,
+      total_expenses: currentExpenses?.total_expenses || 0,
+      total_savings: (currentIncome?.total_income || 0) - (currentExpenses?.total_expenses || 0),
+      savings_rate: currentIncome?.total_income && currentExpenses?.total_expenses ? 
+        ((currentIncome.total_income - currentExpenses.total_expenses) / currentIncome.total_income) * 100 : 0,
     },
   };
-  
+
   const financialMetrics = {
     current_month: {
-      year: 2025,
-      month: 9,
+      year: currentYear,
+      month: currentMonth,
       income: dashboardData.monthly_income,
       expenses: dashboardData.monthly_expenses,
-      total_income: 11000000,
-      total_expenses: 5000000,
-      total_savings: 6000000,
-      savings_rate: 54.5,
+      total_income: dashboardData.summary.total_income,
+      total_expenses: dashboardData.summary.total_expenses,
+      total_savings: dashboardData.summary.total_savings,
+      savings_rate: dashboardData.summary.savings_rate,
     },
     previous_month: {
-      year: 2025,
-      month: 8,
-      income: {
+      year: currentYear,
+      month: currentMonth - 1,
+      income: previousIncome || {
         id: 'temp-prev-1',
         user_id: tempUserId,
-        year: 2025,
-        month: 8,
-        경훈_월급: 4800000,
-        선화_월급: 5700000,
+        year: currentYear,
+        month: currentMonth - 1,
+        경훈_월급: 0,
+        선화_월급: 0,
         other_income: 0,
-        total_income: 10500000,
+        total_income: 0,
         notes: '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
-      expenses: {
+      expenses: previousExpenses || {
         id: 'temp-prev-2',
         user_id: tempUserId,
-        year: 2025,
-        month: 8,
-        housing: 1900000,
-        food: 1400000,
-        transportation: 480000,
-        utilities: 280000,
-        healthcare: 180000,
-        entertainment: 280000,
-        other_expenses: 180000,
-        total_expenses: 4800000,
+        year: currentYear,
+        month: currentMonth - 1,
+        housing: 0,
+        food: 0,
+        transportation: 0,
+        utilities: 0,
+        healthcare: 0,
+        entertainment: 0,
+        other_expenses: 0,
+        total_expenses: 0,
         notes: '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
-      total_income: 10500000,
-      total_expenses: 4800000,
-      total_savings: 5700000,
-      savings_rate: 54.3,
+      total_income: previousIncome?.total_income || 0,
+      total_expenses: previousExpenses?.total_expenses || 0,
+      total_savings: (previousIncome?.total_income || 0) - (previousExpenses?.total_expenses || 0),
+      savings_rate: previousIncome?.total_income && previousExpenses?.total_expenses ? 
+        ((previousIncome.total_income - previousExpenses.total_expenses) / previousIncome.total_income) * 100 : 0,
     },
     change: {
-      income: { amount: 500000, percentage: 4.8, type: 'positive' as const },
-      expenses: { amount: 200000, percentage: 4.2, type: 'positive' as const },
-      savings: { amount: 300000, percentage: 5.3, type: 'positive' as const },
+      income: { 
+        amount: dashboardData.summary.total_income - (previousIncome?.total_income || 0), 
+        percentage: previousIncome?.total_income ? ((dashboardData.summary.total_income - previousIncome.total_income) / previousIncome.total_income) * 100 : 0, 
+        type: dashboardData.summary.total_income > (previousIncome?.total_income || 0) ? 'positive' as const : 'negative' as const
+      },
+      expenses: { 
+        amount: (currentExpenses?.total_expenses || 0) - (previousExpenses?.total_expenses || 0), 
+        percentage: previousExpenses?.total_expenses ? (((currentExpenses?.total_expenses || 0) - (previousExpenses?.total_expenses || 0)) / previousExpenses.total_expenses) * 100 : 0, 
+        type: (currentExpenses?.total_expenses || 0) > (previousExpenses?.total_expenses || 0) ? 'positive' as const : 'negative' as const
+      },
+      savings: { 
+        amount: dashboardData.summary.total_savings - ((previousIncome?.total_income || 0) - (previousExpenses?.total_expenses || 0)), 
+        percentage: ((previousIncome?.total_income || 0) - (previousExpenses?.total_expenses || 0)) ? 
+          ((dashboardData.summary.total_savings - ((previousIncome?.total_income || 0) - (previousExpenses?.total_expenses || 0))) / ((previousIncome?.total_income || 0) - (previousExpenses?.total_expenses || 0))) * 100 : 0, 
+        type: dashboardData.summary.total_savings > ((previousIncome?.total_income || 0) - (previousExpenses?.total_expenses || 0)) ? 'positive' as const : 'negative' as const
+      },
     },
   };
-  
-  const loading = false;
-  const error = null;
-
-  const handleIncomeSubmit = (data: { year?: number; month?: number; 경훈_월급?: number; 선화_월급?: number; other_income?: number; notes?: string }) => {
-    // 임시로 로컬 상태 업데이트 (나중에 데이터베이스 연동)
-    setIncomeData(prev => ({
-      ...prev,
-      ...data,
-      totalIncome: data.경훈_월급 + data.선화_월급
-    }));
-    
-    setShowIncomeForm(false);
-    toast({
-      description: '월급 정보가 성공적으로 저장되었습니다.',
-    });
-  };
-
-
 
   // 에러가 있는 경우 표시
   if (error) {
     console.error('Dashboard data error:', error);
   }
+
+  // 날짜 변경 핸들러
+  const handleYearChange = (year: string) => {
+    setCurrentYear(parseInt(year));
+  };
+
+  const handleMonthChange = (month: string) => {
+    setCurrentMonth(parseInt(month));
+  };
+
+  // 이전/다음 월 이동
+  const goToPreviousMonth = () => {
+    if (currentMonth === 1) {
+      setCurrentMonth(12);
+      setCurrentYear(currentYear - 1);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+  };
+
+  const goToNextMonth = () => {
+    if (currentMonth === 12) {
+      setCurrentMonth(1);
+      setCurrentYear(currentYear + 1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+  };
+
+  // 현재 월로 이동
+  const goToCurrentMonth = () => {
+    const now = new Date();
+    setCurrentYear(now.getFullYear());
+    setCurrentMonth(now.getMonth() + 1);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -191,113 +230,197 @@ export default function Home() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                {incomeData.year}년 {incomeData.month}월 재무 현황
+                {currentYear}년 {currentMonth}월 재무 현황
               </h2>
               <p className="text-gray-600">월별 수입, 지출, 저축 현황을 한눈에 확인하세요</p>
             </div>
-            <Button 
-              onClick={() => setShowIncomeForm(!showIncomeForm)}
-              className="gap-2"
-            >
-              <TrendingUp className="h-4 w-4" />
-              {showIncomeForm ? '입력 폼 닫기' : '월급 입력'}
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => router.push(`/income/${currentYear}/${currentMonth}`)}
+                className="gap-2"
+              >
+                <TrendingUp className="h-4 w-4" />
+                수입 입력
+              </Button>
+              <Button 
+                onClick={() => router.push(`/expenses/${currentYear}/${currentMonth}`)}
+                variant="outline"
+                className="gap-2"
+              >
+                <Wallet className="h-4 w-4" />
+                지출 입력
+              </Button>
+            </div>
           </div>
 
-          {showIncomeForm && (
-            <div className="mb-6">
-              <IncomeForm 
-                onSubmit={handleIncomeSubmit}
-                initialData={incomeData}
+          {/* 날짜 선택기 */}
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToPreviousMonth}
+                    className="gap-2"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    이전 달
+                  </Button>
+
+                  <div className="flex items-center gap-2">
+                    <Select value={currentYear.toString()} onValueChange={handleYearChange}>
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 10 }, (_, i) => 2020 + i).map(year => (
+                          <SelectItem key={year} value={year.toString()}>
+                            {year}년
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={currentMonth.toString()} onValueChange={handleMonthChange}>
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                          <SelectItem key={month} value={month.toString()}>
+                            {month}월
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToNextMonth}
+                    className="gap-2"
+                  >
+                    다음 달
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToCurrentMonth}
+                  className="gap-2"
+                >
+                  이번 달
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 로딩 상태 */}
+        {loading && (
+          <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+            <span className="ml-2 text-gray-500">데이터를 불러오는 중...</span>
+          </div>
+        )}
+
+        {/* 에러 상태 */}
+        {error && (
+          <div className="text-center py-8">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <p className="text-red-600 mb-2">데이터를 불러올 수 없습니다.</p>
+            <p className="text-sm text-gray-500 mb-4">{error.message}</p>
+            <Button onClick={() => window.location.reload()}>
+              다시 시도
+            </Button>
+          </div>
+        )}
+
+        {/* 데이터가 없는 경우 안내 */}
+        {!loading && !error && !hasRealData && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-yellow-500" />
+                데이터가 없습니다
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 mb-4">
+                {currentYear}년 {currentMonth}월의 수입/지출 데이터가 없습니다. 
+                데이터를 입력하여 재무 현황을 확인해보세요.
+              </p>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => router.push(`/income/${currentYear}/${currentMonth}`)}
+                  className="gap-2"
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  수입 입력하기
+                </Button>
+                <Button 
+                  onClick={() => router.push(`/expenses/${currentYear}/${currentMonth}`)}
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Wallet className="h-4 w-4" />
+                  지출 입력하기
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 데이터가 로드된 경우에만 컴포넌트 렌더링 */}
+        {!loading && !error && (
+          <>
+            {/* 요약 카드 섹션 */}
+            <DashboardHomeCards
+              dashboardData={dashboardData}
+              financialMetrics={financialMetrics}
+              loading={loading}
+              error={error}
+            />
+
+            {/* 월별 수입/지출 비교 차트 - 현재 월 포함 과거 6개월 데이터 */}
+            <div className="mb-8">
+              <IncomeExpenseChart
+                data={recentMonths.map(({ year, month }, index) => {
+                  const monthExpenses = recentExpensesQueries[index]?.data;
+                  const monthIncome = recentIncomeQueries[index]?.data;
+                  
+                  return {
+                    month: `${month}월`,
+                    income: monthIncome?.total_income || 0,
+                    expense: monthExpenses?.total_expenses || 0
+                  };
+                })}
               />
             </div>
-          )}
-        </div>
 
-        {/* 요약 카드 섹션 */}
-        <DashboardHomeCards
-          dashboardData={dashboardData}
-          financialMetrics={financialMetrics}
-          loading={loading}
-          error={error}
-        />
+            {/* 누적 저축 추이 차트 */}
+            <div className="mb-8">
+              <SavingsTrendChart
+                financialMetrics={financialMetrics}
+                loading={loading}
+                error={error}
+              />
+            </div>
 
-        {/* 월별 수입/지출 비교 차트 */}
-        <div className="mb-8">
-          <IncomeExpenseChart
-            data={[
-              { month: '1월', income: financialMetrics?.current_month?.total_income || 0, expense: financialMetrics?.current_month?.total_expenses || 0 },
-              { month: '2월', income: financialMetrics?.previous_month?.total_income || 0, expense: financialMetrics?.previous_month?.total_expenses || 0 },
-            ]}
-          />
-        </div>
-
-        {/* 누적 저축 추이 차트 */}
-        <div className="mb-8">
-          <SavingsTrendChart
-            financialMetrics={financialMetrics}
-            loading={loading}
-            error={error}
-          />
-        </div>
-
-        {/* 계좌별 잔액 현황 */}
-        <div className="mb-8">
-          <AccountBalanceChart
-            accounts={dashboardData?.accounts || []}
-            loading={loading}
-            error={error}
-          />
-        </div>
-
-        {/* 상세 정보 섹션 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wallet className="h-5 w-5" />
-                월급 상세 정보
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">경훈 월급</span>
-                <span className="font-semibold">{incomeData.경훈_월급.toLocaleString()}원</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">선화 월급</span>
-                <span className="font-semibold">{incomeData.선화_월급.toLocaleString()}원</span>
-              </div>
-              <div className="flex justify-between items-center py-2 bg-blue-50 p-3 rounded-lg">
-                <span className="text-gray-700 font-medium">총 월급</span>
-                <span className="text-blue-600 font-bold text-lg">{incomeData.totalIncome.toLocaleString()}원</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                지출 분석
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">총 수입</span>
-                <span className="font-semibold text-green-600">{incomeData.totalIncome.toLocaleString()}원</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">총 지출</span>
-                <span className="font-semibold text-red-600">{incomeData.expenses.toLocaleString()}원</span>
-              </div>
-              <div className="flex justify-between items-center py-2 bg-green-50 p-3 rounded-lg">
-                <span className="text-gray-700 font-medium">순 저축</span>
-                <span className="text-green-600 font-bold text-lg">{incomeData.savings.toLocaleString()}원</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            {/* 통장/계좌별 잔액 차트 */}
+            <div className="mb-8">
+              <AccountBalanceChart
+                accounts={dashboardData.accounts}
+                loading={loading}
+                error={error}
+              />
+            </div>
+          </>
+        )}
       </main>
     </div>
   );
