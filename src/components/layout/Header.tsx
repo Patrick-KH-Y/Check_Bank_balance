@@ -2,10 +2,17 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wallet, TrendingUp, BarChart3, Share2, CreditCard, PiggyBank, Eye } from 'lucide-react';
+import { Wallet, TrendingUp, BarChart3, Share2, CreditCard, PiggyBank, Eye, Home } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
+  const router = useRouter();
+
+  const handleHomeClick = () => {
+    router.push('/');
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 px-4 py-4">
       <div className="max-w-7xl mx-auto">
@@ -21,6 +28,15 @@ export default function Header() {
           </div>
           
           <div className="flex items-center space-x-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleHomeClick}
+            >
+              <Home className="h-4 w-4" />
+              홈
+            </Button>
             <Link href="/dashboard/summary">
               <Button variant="outline" size="sm" className="gap-2">
                 <BarChart3 className="h-4 w-4" />

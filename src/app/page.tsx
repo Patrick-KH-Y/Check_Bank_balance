@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Header from '@/components/layout/Header';
 import DashboardHomeCards from '@/components/dashboard/DashboardHomeCards';
 import IncomeExpenseChart from '@/components/dashboard/IncomeExpenseChart';
 import SavingsTrendChart from '@/components/dashboard/SavingsTrendChart';
@@ -186,8 +185,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* 월 선택 및 데이터 입력 섹션 */}
         <div className="mb-8">
