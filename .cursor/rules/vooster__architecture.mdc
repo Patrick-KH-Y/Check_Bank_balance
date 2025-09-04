@@ -1,0 +1,164 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Technical Requirements Document (TRD)
+
+## 1. Executive Technical Summary
+- **Project Overview**: Next.js 기반 웹 애플리케이션으로, 사용자(주로 가계 재무 담당자)가 월별 수입, 지출, 저축, 통장 현황을 시각적으로 확인하고, 가족과 재무 요약을 공유할 수 있도록 설계한다. MVP는 데이터 수동 입력을 지원하며, 읽기 전용 공유 링크를 제공한다.
+- **Core Technology Stack**: Next.js 15, TypeScript, TailwindCSS, shadcn/ui, lucide-react, @tanstack/react-query, Supabase (Postgres, Auth), date-fns, localforage
+- **Key Technical Objectives**:
+    - 빠른 초기 로딩 속도 (≤ 2초) 및 인터랙션 응답 속도 (≤ 200ms) 유지
+    - 반응형 디자인 지원 (모바일, 데스크톱)
+    - 데이터 암호화 저장 및 개인정보 보호
+    - 높은 대시보드 공유 링크 생성률 및 데이터 입력 완료율 달성
+- **Critical Technical Assumptions**:
+    - 사용자는 웹 환경에 익숙하며, 기본적인 데이터 입력 방법을 이해한다.
+    - MVP는 데이터 수동 입력을 기반으로 한다.
+    - Supabase의 안정적인 서비스 제공을 가정한다.
+
+## 2. Tech Stack
+
+| Category          | Technology / Library        | Reasoning (Why it's chosen for this project) |
+| ----------------- | --------------------------- | -------------------------------------------- |
+| 프레임워크          | Next.js 15                  | 서버 사이드 렌더링(SSR) 및 정적 사이트 생성(SSG) 지원, 빠른 초기 로딩 속도, SEO 최적화 |
+| 언어              | TypeScript                  | 정적 타입 검사, 코드 안정성 및 유지보수성 향상 |
+| 스타일링          | TailwindCSS                 | 유틸리티 우선 CSS, 빠른 스타일링 및 일관성 유지 |
+| UI 컴포넌트       | shadcn/ui                   | 재사용 가능한 UI 컴포넌트, 디자인 시스템 통합 용이 |
+| 아이콘            | lucide-react                | 고품질 아이콘 제공, UI 완성도 향상 |
+| 상태 관리          | @tanstack/react-query       | 서버 상태 관리, 데이터 페칭 및 캐싱 효율성 향상 |
+| 데이터베이스       | Supabase Postgres           | 확장 가능한 관계형 데이터베이스, 안정적인 데이터 저장 |
+| 인증              | Supabase Auth               | 간편한 이메일 인증, 보안 강화 |
+| 날짜 처리          | date-fns                    | 날짜 및 시간 관련 작업 효율성 향상 |
+| 로컬 스토리지      | localforage               | 간단한 데이터 캐싱 및 사용자 경험 개선 |
+
+## 3. System Architecture Design
+
+### Top-Level building blocks
+- **Frontend (Next.js)**
+    - UI 컴포넌트: shadcn/ui, lucide-react를 사용하여 사용자 인터페이스를 구성한다.
+    - 상태 관리: @tanstack/react-query를 통해 서버 상태를 효율적으로 관리한다.
+    - 라우팅: Next.js 내장 라우팅 시스템을 활용하여 페이지 이동을 처리한다.
+- **Backend (Supabase)**
+    - 데이터베이스: Supabase Postgres를 사용하여 사용자 데이터 및 대시보드 데이터를 저장한다.
+    - 인증: Supabase Auth를 통해 사용자 인증 및 권한 관리를 처리한다.
+    - API: Next.js API routes를 사용하여 프론트엔드와 데이터베이스 간의 통신을 처리한다.
+- **Shared Components**
+    - 유틸리티 함수: date-fns를 사용하여 날짜 관련 로직을 처리한다.
+    - 타입 정의: TypeScript를 사용하여 데이터 타입 및 인터페이스를 정의한다.
+    - 로컬 스토리지: localforage를 사용하여 간단한 데이터를 캐싱한다.
+
+### Top-Level Component Interaction Diagram
+
+```mermaid
+graph TD
+    A[Frontend (Next.js)] --> B[Backend (Supabase)]
+    B --> C[Supabase Postgres]
+    A --> D[Supabase Auth]
+```
+
+- **Frontend (Next.js) <-> Backend (Supabase)**: Next.js 애플리케이션은 API routes를 통해 Supabase 백엔드와 통신한다.
+- **Backend (Supabase) -> Supabase Postgres**: Supabase 백엔드는 Supabase Postgres 데이터베이스에 데이터를 저장하고 검색한다.
+- **Frontend (Next.js) -> Supabase Auth**: Next.js 애플리케이션은 Supabase Auth를 사용하여 사용자 인증을 처리한다.
+
+### Code Organization & Convention
+**Domain-Driven Organization Strategy**
+- **Domain Separation**: 사용자 관리, 대시보드 관리, 공유 기능 등으로 도메인을 분리한다.
+- **Layer-Based Architecture**: 프레젠테이션 레이어(UI 컴포넌트), 비즈니스 로직 레이어(hooks, utils), 데이터 접근 레이어(Supabase API)로 분리한다.
+- **Feature-Based Modules**: 각 기능별 폴더를 생성하여 관련 컴포넌트, 훅, 유틸리티 함수를 함께 관리한다.
+- **Shared Components**: 공통으로 사용되는 유틸리티 함수, 타입 정의, UI 컴포넌트는 `components/shared` 폴더에 저장한다.
+
+**Universal File & Folder Structure**
+```
+/
+├── components/
+│   ├── dashboard/          # 대시보드 관련 컴포넌트
+│   │   ├── DashboardCard.tsx
+│   │   ├── IncomeExpenseChart.tsx
+│   │   └── ...
+│   ├── shared/             # 공통 컴포넌트
+│   │   ├── Button.tsx
+│   │   ├── Input.tsx
+│   │   └── ...
+│   └── ui/                 # shadcn/ui 컴포넌트 오버라이딩
+│       ├── button.tsx
+│       ├── input.tsx
+│       └── ...
+├── pages/
+│   ├── api/                # Next.js API routes
+│   │   ├── dashboard.ts
+│   │   ├── share.ts
+│   │   └── ...
+│   ├── dashboard.tsx       # 대시보드 페이지
+│   ├── index.tsx           # 랜딩 페이지
+│   └── login.tsx           # 로그인 페이지
+├── utils/
+│   ├── date-utils.ts       # 날짜 관련 유틸리티 함수
+│   ├── api-client.ts       # Supabase API 클라이언트
+│   └── ...
+├── types/
+│   ├── dashboard.ts        # 대시보드 관련 타입 정의
+│   ├── user.ts             # 사용자 관련 타입 정의
+│   └── ...
+├── public/               # 정적 파일
+│   ├── favicon.ico
+│   └── ...
+├── styles/               # 전역 스타일
+│   ├── globals.css
+│   └── ...
+├── next.config.js        # Next.js 설정 파일
+├── tsconfig.json         # TypeScript 설정 파일
+└── package.json          # 프로젝트 의존성
+```
+
+### Data Flow & Communication Patterns
+- **Client-Server Communication**: 프론트엔드는 Next.js API routes를 통해 백엔드와 통신하며, API 요청/응답 패턴을 사용한다.
+- **Database Interaction**: Supabase API 클라이언트를 사용하여 Supabase Postgres 데이터베이스에 데이터를 저장하고 검색한다. ORM은 사용하지 않는다.
+- **External Service Integration**: Supabase Auth를 사용하여 사용자 인증을 처리한다.
+- **Data Synchronization**: @tanstack/react-query를 사용하여 서버 상태를 관리하고, 데이터 변경 시 자동으로 UI를 업데이트한다.
+
+## 4. Performance & Optimization Strategy
+- Next.js의 서버 사이드 렌더링(SSR) 및 정적 사이트 생성(SSG) 기능을 활용하여 초기 로딩 속도를 최적화한다.
+- 이미지 최적화 및 코드 스플리팅을 통해 번들 크기를 줄인다.
+- @tanstack/react-query의 캐싱 기능을 활용하여 불필요한 API 요청을 줄인다.
+- 데이터베이스 쿼리 최적화를 통해 데이터 접근 속도를 향상시킨다.
+
+## 5. Implementation Roadmap & Milestones
+### Phase 1: Foundation (MVP Implementation)
+- **Core Infrastructure**: Next.js 프로젝트 설정, Supabase 프로젝트 설정, 기본 레이아웃 구성
+- **Essential Features**: 사용자 인증 (Supabase Auth), 데이터 입력 폼, 대시보드 카드 표시
+- **Basic Security**: HTTPS 적용, 데이터 암호화 저장
+- **Development Setup**: 개발 환경 설정, CI/CD 파이프라인 구축 (Vercel)
+- **Timeline**: Week 1-2
+
+### Phase 2: Feature Enhancement
+- **Advanced Features**: 월별 수입/지출 비교 차트, 누적 저축 추이 라인차트, 통장/계좌별 잔액 리스트 + 그래프, 월별 요약 리포트 다운로드, 읽기 전용 공유 링크
+- **Performance Optimization**: 코드 최적화, 데이터베이스 쿼리 최적화, 이미지 최적화
+- **Enhanced Security**: 추가적인 보안 검토 및 취약점 수정
+- **Monitoring Implementation**: 오류 로깅 및 성능 모니터링 시스템 구축
+- **Timeline**: Week 3-5
+
+## 6. Risk Assessment & Mitigation Strategies
+### Technical Risk Analysis
+- **Technology Risks**: Next.js, Supabase 등 사용 기술에 대한 숙련도 부족 → 팀 내 학습 및 외부 자료 활용
+- **Performance Risks**: 데이터 증가에 따른 성능 저하 → 데이터베이스 쿼리 최적화, 캐싱 전략 적용
+- **Security Risks**: 데이터 유출 및 보안 취약점 → 데이터 암호화, 정기적인 보안 검토
+- **Integration Risks**: Supabase 서비스 장애 → Supabase 상태 모니터링, 대체 서비스 검토
+- **Mitigation Strategies**:
+    - 기술 스택에 대한 충분한 학습 및 경험 축적
+    - 성능 테스트 및 프로파일링을 통한 병목 지점 파악 및 개선
+    - 정기적인 보안 검토 및 취약점 점검
+    - Supabase 서비스 상태 모니터링 및 장애 발생 시 대응 계획 수립
+
+### Project Delivery Risks
+- **Timeline Risks**: 개발 일정 지연 → 스프린트 계획 및 데드라인 준수, 우선순위 조정
+- **Resource Risks**: 개발 인력 부족 → 추가 인력 투입 또는 기능 축소
+- **Quality Risks**: 코드 품질 저하 → 코드 리뷰 및 테스트 자동화
+- **Deployment Risks**: 배포 과정에서의 문제 발생 → 배포 자동화 및 롤백 전략 수립
+- **Contingency Plans**:
+    - 개발 일정 지연 시 기능 우선순위 조정 및 개발 범위 축소
+    - 개발 인력 부족 시 추가 인력 투입 또는 외부 전문가 활용
+    - 코드 품질 저하 시 코드 리뷰 강화 및 테스트 자동화 시스템 구축
+    - 배포 과정 문제 발생 시 롤백 및 문제 해결 후 재배포
+
