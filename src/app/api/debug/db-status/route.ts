@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     await initializeDatabase();
 
     // 모든 테이블의 데이터 개수 조회
-    const tables = ['users', 'monthly_income', 'monthly_expenses', 'accounts'];
+    const tables = ['users', 'monthly_income', 'monthly_expenses', 'accounts', 'fixed_expenses'];
     const tableCounts: Record<string, any> = {};
 
     for (const table of tables) {
@@ -37,6 +37,15 @@ export async function GET(request: NextRequest) {
       recentExpenses = { error: error instanceof Error ? error.message : 'Unknown error' };
     }
 
+    // 최근 고정 지출 데이터 조회
+    let recentFixedExpenses = null;
+    try {
+      const fixedExpensesResult = await queryDatabase(`SELECT * FROM fixed_expenses WHERE is_active = 1 ORDER BY updated_at DESC LIMIT 5`);
+      recentFixedExpenses = fixedExpensesResult;
+    } catch (error) {
+      recentFixedExpenses = { error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
@@ -44,7 +53,8 @@ export async function GET(request: NextRequest) {
         location: 'data/finance.db',
         tableCounts,
         recentIncome,
-        recentExpenses
+        recentExpenses,
+        recentFixedExpenses
       }
     });
 

@@ -83,16 +83,18 @@ export function useDatabase() {
         });
 
         // 대시보드 데이터도 업데이트
-        if (previousDashboard) {
+        if (previousDashboard && typeof previousDashboard === 'object' && 'summary' in previousDashboard && 
+            previousDashboard.summary && typeof previousDashboard.summary === 'object') {
+          const summary = previousDashboard.summary as any;
           const updatedDashboard = {
             ...previousDashboard,
             monthly_income: optimisticIncome,
             summary: {
-              ...previousDashboard.summary,
+              ...summary,
               total_income: optimisticIncome.total_income,
-              total_savings: optimisticIncome.total_income - previousDashboard.summary.total_expenses,
-              savings_rate: previousDashboard.summary.total_expenses > 0 
-                ? ((optimisticIncome.total_income - previousDashboard.summary.total_expenses) / optimisticIncome.total_income) * 100 
+              total_savings: optimisticIncome.total_income - summary.total_expenses,
+              savings_rate: summary.total_expenses > 0 
+                ? ((optimisticIncome.total_income - summary.total_expenses) / optimisticIncome.total_income) * 100 
                 : 0,
             },
           };
@@ -199,16 +201,18 @@ export function useDatabase() {
           success: true,
         });
 
-        if (previousDashboard) {
+        if (previousDashboard && typeof previousDashboard === 'object' && 'summary' in previousDashboard && 
+            previousDashboard.summary && typeof previousDashboard.summary === 'object') {
+          const summary = previousDashboard.summary as any;
           const updatedDashboard = {
             ...previousDashboard,
             monthly_expenses: optimisticExpenses,
             summary: {
-              ...previousDashboard.summary,
+              ...summary,
               total_expenses: optimisticExpenses.total_expenses,
-              total_savings: previousDashboard.summary.total_income - optimisticExpenses.total_expenses,
-              savings_rate: previousDashboard.summary.total_income > 0 
-                ? ((previousDashboard.summary.total_income - optimisticExpenses.total_expenses) / previousDashboard.summary.total_income) * 100 
+              total_savings: summary.total_income - optimisticExpenses.total_expenses,
+              savings_rate: summary.total_income > 0 
+                ? ((summary.total_income - optimisticExpenses.total_expenses) / summary.total_income) * 100 
                 : 0,
             },
           };

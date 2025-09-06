@@ -214,7 +214,7 @@ export async function encryptSensitiveFields<T extends Record<string, any>>(
             encryptedValue = await encryptDataClient(data[field]);
         }
         
-        encryptedData[field] = encryptedValue;
+        (encryptedData as any)[field] = encryptedValue;
       }
     }
     
@@ -252,7 +252,7 @@ export async function decryptSensitiveFields<T extends Record<string, any>>(
             decryptedValue = await decryptDataClient(data[field]);
         }
         
-        decryptedData[field] = decryptedValue;
+        (decryptedData as any)[field] = decryptedValue;
       }
     }
     

@@ -114,6 +114,9 @@ export async function initializeDatabase(): Promise<void> {
 
       // 사용자만 생성 (기본 데이터 없이)
       insertUserOnly(db).then(() => {
+        // 기본 고정 지출 데이터 삽입
+        return insertDefaultFixedExpenses(db);
+      }).then(() => {
         console.log('데이터베이스 초기화 완료');
         resolve();
       }).catch(reject);
@@ -159,6 +162,43 @@ async function insertUserOnly(db: sqlite3.Database): Promise<void> {
         console.log('기본 사용자 생성 완료');
         resolve();
       });
+    });
+  });
+}
+
+// 기본 고정 지출 데이터 삽입
+async function insertDefaultFixedExpenses(db: sqlite3.Database): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // 기존 고정 지출이 있는지 확인
+    db.get('SELECT COUNT(*) as count FROM monthly_expenses WHERE housing = 0 AND food = 0 AND transportation = 0 AND utilities = 0 AND healthcare = 0 AND entertainment = 0 AND other_expenses = 0', (err, row) => {
+      if (err) {
+        console.error('고정 지출 데이터 확인 오류:', err);
+        reject(err);
+        return;
+      }
+
+      const fixedExpenseCount = (row as any)?.count || 0;
+      
+      // 고정 지출이 없으면 삽입
+      if (fixedExpenseCount === 0) {
+        console.log('기본 고정 지출 데이터를 삽입합니다...');
+        const insertFixedExpenses = `
+          INSERT INTO monthly_expenses (id, user_id, year, month, housing, food, transportation, utilities, healthcare, entertainment, other_expenses)
+          VALUES ('fixed-expenses-1', 'temp-user-123', 2023, 1, 0, 0, 0, 0, 0, 0, 0)
+        `;
+        db.run(insertFixedExpenses, (err) => {
+          if (err) {
+            console.error('고정 지출 데이터 삽입 오류:', err);
+            reject(err);
+            return;
+          }
+          console.log('기본 고정 지출 데이터 삽입 완료');
+          resolve();
+        });
+      } else {
+        console.log('기본 고정 지출 데이터가 이미 존재합니다.');
+        resolve();
+      }
     });
   });
 }

@@ -219,8 +219,8 @@ export function useSecurityActivityTrend(statistics: SecurityStatistics | undefi
   const totalActivity = Object.values(dailyActivity).reduce((sum, count) => sum + count, 0);
   const averageActivity = totalActivity / Math.max(Object.keys(dailyActivity).length, 1);
   
-  const recentActivity = last7Days.slice(-3).reduce((sum, { count }) => sum + count, 0);
-  const previousActivity = last7Days.slice(0, -3).reduce((sum, { count }) => sum + count, 0);
+  const recentActivity = activityTrend.slice(-3).reduce((sum, { count }) => sum + count, 0);
+  const previousActivity = activityTrend.slice(0, -3).reduce((sum, { count }) => sum + count, 0);
   
   const changeRate = previousActivity > 0 
     ? ((recentActivity - previousActivity) / previousActivity) * 100 

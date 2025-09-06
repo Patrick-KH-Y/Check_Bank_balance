@@ -200,10 +200,7 @@ export const visualAccessibility = {
   },
   
   // 포커스 표시 강화
-  focusIndicator: {
-    ...focusStyles.ring,
-    'focus-visible:ring-offset-background': true,
-  },
+  focusIndicator: focusStyles.ring + ' focus-visible:ring-offset-background',
   
   // 호버 상태 표시
   hoverState: 'hover:bg-opacity-10 hover:scale-105 transition-all duration-200',

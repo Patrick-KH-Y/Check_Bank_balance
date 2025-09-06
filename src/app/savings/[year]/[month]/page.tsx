@@ -67,7 +67,7 @@ export default function SavingsPage({ params }: PageProps) {
     isDeleting
   } = useSavings(resolvedParams?.year, resolvedParams?.month, selectedAccount === 'all' ? undefined : selectedAccount);
 
-  const { accounts } = useAccounts();
+  const { accounts } = useAccounts(resolvedParams?.year || 2025, resolvedParams?.month || 9);
 
   // 검색 및 필터링된 저축 데이터
   const filteredSavings = savings.filter(saving => {

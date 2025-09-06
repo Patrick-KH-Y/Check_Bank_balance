@@ -121,11 +121,15 @@ export interface DashboardData {
   monthly_income: MonthlyIncome;
   monthly_expenses: MonthlyExpenses;
   accounts: Account[];
+  fixed_expenses?: FixedExpense[];
+  total_fixed_expenses?: number;
   summary: {
     total_income: number;
     total_expenses: number;
     total_savings: number;
     savings_rate: number;
+    total_expenses_with_fixed?: number;
+    total_savings_with_fixed?: number;
   };
 }
 
@@ -223,6 +227,7 @@ export interface MonthlySavings {
   notes?: string;
   created_at: string;
   updated_at: string;
+  accounts?: Account;
 }
 
 export interface SavingsGoal {
@@ -345,5 +350,25 @@ export interface FinancialAnalysis {
     projected_savings: number;
     recommendations: string[];
   };
+}
+
+// 고정 지출 타입
+export interface FixedExpense {
+  id: string;
+  user_id: string;
+  year: number;
+  month: number;
+  category: string;
+  amount: number;
+  description?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FixedExpenseFormData {
+  category: string;
+  amount: number;
+  description?: string;
 }
 

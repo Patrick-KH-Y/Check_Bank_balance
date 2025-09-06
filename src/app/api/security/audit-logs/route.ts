@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       return setSecurityHeaders(
         NextResponse.json({ 
           error: '쿼리 파라미터가 유효하지 않습니다.', 
-          details: validation.errors 
+          details: 'errors' in validation ? validation.errors : []
         }, { status: 400 })
       );
     }
@@ -158,9 +158,9 @@ export async function POST(request: NextRequest) {
     const validation = validateInputData(body, auditLogSchema);
     if (!validation.success) {
       return setSecurityHeaders(
-        NextResponse.json({ 
-          error: '감사 로그 데이터가 유효하지 않습니다.', 
-          details: validation.errors 
+        NextResponse.json({
+          error: '감사 로그 데이터가 유효하지 않습니다.',       
+          details: 'errors' in validation ? validation.errors : []
         }, { status: 400 })
       );
     }
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
       action,
       old_values: old_values || null,
       new_values: new_values || null,
-      ip_address: ip_address || request.ip || request.headers.get('x-forwarded-for') || null,
+      ip_address: ip_address || request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
       user_agent: user_agent || request.headers.get('user-agent') || null,
     };
     

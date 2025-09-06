@@ -72,7 +72,7 @@ export function middleware(request: NextRequest) {
   
   // Rate Limiting (API 라우트에만 적용)
   if (request.nextUrl.pathname.startsWith('/api/')) {
-    const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     
     if (!checkRateLimit(ip, request.nextUrl.pathname)) {
       return new NextResponse(

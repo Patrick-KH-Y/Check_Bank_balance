@@ -30,7 +30,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useAccounts } from '@/hooks/useAccounts';
 
-import type { Account, AccountFormData } from '@/types/dashboard';
+import type { Account } from '@/types/dashboard';
+import type { AccountFormData } from '@/hooks/useAccounts';
 
 export default function AccountsPage({ 
   params 
@@ -41,8 +42,8 @@ export default function AccountsPage({
   const [isAdding, setIsAdding] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [formData, setFormData] = useState<AccountFormData>({
-    account_name: '',
-    account_type: 'checking',
+    accountName: '',
+    accountType: 'checking',
     balance: 0,
     currency: 'KRW',
   });
@@ -79,8 +80,8 @@ export default function AccountsPage({
   const handleAdd = () => {
     setIsAdding(true);
     setFormData({
-      account_name: '',
-      account_type: 'checking',
+      accountName: '',
+      accountType: 'checking',
       balance: 0,
       currency: 'KRW',
     });
@@ -90,8 +91,8 @@ export default function AccountsPage({
     setIsEditing(account.id);
     setEditingAccount(account);
     setFormData({
-      account_name: account.account_name,
-      account_type: account.account_type,
+      accountName: account.account_name,
+      accountType: account.account_type,
       balance: account.balance,
       currency: account.currency,
     });
@@ -99,26 +100,26 @@ export default function AccountsPage({
 
   const handleDelete = (accountId: string) => {
     if (confirm('정말로 이 계좌를 삭제하시겠습니까?')) {
-      deleteAccount(accountId);
+      deleteAccount({ id: accountId, userId: 'temp-user-123' });
     }
   };
 
   const handleSave = () => {
     if (isAdding) {
       // 새 계좌 추가
-      createAccount(formData);
+      createAccount({ userId: 'temp-user-123', data: formData });
       setIsAdding(false);
     } else if (isEditing && editingAccount) {
       // 기존 계좌 수정
-      updateAccount({ ...formData, id: editingAccount.id });
+      updateAccount({ id: editingAccount.id, userId: 'temp-user-123', data: formData });
       setIsEditing(null);
       setEditingAccount(null);
     }
     
     // 폼 초기화
     setFormData({
-      account_name: '',
-      account_type: 'checking',
+      accountName: '',
+      accountType: 'checking',
       balance: 0,
       currency: 'KRW',
     });
@@ -129,8 +130,8 @@ export default function AccountsPage({
     setIsEditing(null);
     setEditingAccount(null);
     setFormData({
-      account_name: '',
-      account_type: 'checking',
+      accountName: '',
+      accountType: 'checking',
       balance: 0,
       currency: 'KRW',
     });
@@ -331,11 +332,11 @@ export default function AccountsPage({
           <div className="space-y-6 mt-6">
             {/* 계좌명 */}
             <div className="space-y-2">
-              <Label htmlFor="account_name">계좌명</Label>
+              <Label htmlFor="accountName">계좌명</Label>
               <Input
-                id="account_name"
-                value={formData.account_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, account_name: e.target.value }))}
+                id="accountName"
+                value={formData.accountName}
+                onChange={(e) => setFormData(prev => ({ ...prev, accountName: e.target.value }))}
                 placeholder="예: 신한은행 입출금통장"
                 required
               />
@@ -343,11 +344,11 @@ export default function AccountsPage({
 
             {/* 계좌 유형 */}
             <div className="space-y-2">
-              <Label htmlFor="account_type">계좌 유형</Label>
+              <Label htmlFor="accountType">계좌 유형</Label>
               <select
-                id="account_type"
-                value={formData.account_type}
-                onChange={(e) => setFormData(prev => ({ ...prev, account_type: e.target.value as any }))}
+                id="accountType"
+                value={formData.accountType}
+                onChange={(e) => setFormData(prev => ({ ...prev, accountType: e.target.value as any }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="checking">입출금</option>

@@ -56,6 +56,18 @@ export default function ExpensesForm({ userId, year, month, onClose }: ExpensesF
         notes: expenses.notes,
       });
       setIsEditing(true);
+    } else {
+      // 기본 고정 지출 데이터 설정
+      setFormData({
+        housing: 250000, // 관리비
+        food: 0,
+        transportation: 150000, // 교통비
+        utilities: 60000, // 가스비
+        healthcare: 0,
+        entertainment: 0,
+        other_expenses: 0,
+        notes: '고정 지출 포함: 관리비, 교통비, 가스비, 보험료, 이자 등',
+      });
     }
   }, [expenses]);
 

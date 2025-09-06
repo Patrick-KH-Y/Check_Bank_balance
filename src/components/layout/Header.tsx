@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wallet, TrendingUp, BarChart3, Share2, CreditCard, PiggyBank, Eye, Home } from 'lucide-react';
+import { Wallet, TrendingUp, BarChart3, Share2, CreditCard, PiggyBank, Eye, Home, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -53,6 +53,12 @@ export default function Header() {
               <Button variant="outline" size="sm" className="gap-2">
                 <PiggyBank className="h-4 w-4" />
                 저축 현황
+              </Button>
+            </Link>
+            <Link href="/fixed-expenses/2025/9">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Calendar className="h-4 w-4" />
+                고정 지출
               </Button>
             </Link>
             <Link href="/accessibility">

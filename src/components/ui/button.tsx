@@ -87,7 +87,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ...(ariaDescribedBy && ariaUtils.describedBy(ariaDescribedBy)),
       ...(loading && { 'aria-busy': true }),
       ...(disabled && { 'aria-disabled': true }),
-      ...(loading && loadingText && { 'aria-live': 'polite' }),
+      ...(loading && loadingText && { 'aria-live': 'polite' as const }),
     };
     
     // 키보드 접근성

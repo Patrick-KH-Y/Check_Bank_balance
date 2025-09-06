@@ -22,7 +22,10 @@ export interface AccountFormData {
 
 // 통장 데이터 조회
 export const useAccounts = (year: number, month: number) => {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  const query = useQuery({
     queryKey: ['accounts', year, month],
     queryFn: async (): Promise<Account[]> => {
       const response = await fetch(
@@ -39,6 +42,31 @@ export const useAccounts = (year: number, month: number) => {
     refetchOnWindowFocus: false,
     retry: 1,
   });
+
+  const createAccount = useCreateAccount();
+  const updateAccount = useUpdateAccount();
+  const deleteAccount = useDeleteAccount();
+
+  // 계산된 값들
+  const accounts = query.data || [];
+  const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
+  const accountTypeCounts = accounts.reduce((counts, account) => {
+    counts[account.account_type] = (counts[account.account_type] || 0) + 1;
+    return counts;
+  }, {} as Record<string, number>);
+
+  return {
+    ...query,
+    accounts,
+    totalBalance,
+    accountTypeCounts,
+    createAccount: createAccount.mutateAsync,
+    updateAccount: updateAccount.mutateAsync,
+    deleteAccount: deleteAccount.mutateAsync,
+    isCreating: createAccount.isPending,
+    isUpdating: updateAccount.isPending,
+    isDeleting: deleteAccount.isPending,
+  };
 };
 
 // 통장 데이터 생성

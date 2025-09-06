@@ -3,7 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, PiggyBank, Wallet, BarChart3, Building2, AlertCircle, Info } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils/format';
-import { ExportButton } from './ExportButton';
 import Link from 'next/link';
 import type { DashboardData, FinancialMetrics } from '@/types/dashboard';
 import { ariaUtils, screenReader } from '@/lib/accessibility';
@@ -302,22 +301,6 @@ export default function DashboardHomeCards({
           </Card>
         </Link>
       </div>
-
-      {/* 내보내기 버튼 */}
-      {userId && (
-        <div className="col-span-full flex justify-end">
-          <ExportButton 
-            userId={userId}
-            currentYear={monthly_income.year}
-            currentMonth={monthly_income.month}
-            ariaLabel="재무 데이터 내보내기"
-            ariaDescribedBy="export-description"
-          />
-          <div id="export-description" className="sr-only">
-            현재 월의 수입, 지출, 저축, 통장 잔액 데이터를 PDF 또는 CSV 형식으로 다운로드할 수 있습니다.
-          </div>
-        </div>
-      )}
     </div>
   );
 }

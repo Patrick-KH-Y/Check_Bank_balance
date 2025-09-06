@@ -57,7 +57,7 @@ export function useErrorHandler(retryConfig: Partial<RetryConfig> = {}) {
   }, []);
 
   // 에러 메시지 생성
-  const getErrorMessage = useCallback((errorType: ErrorState['errorType'], error: Error): string => {
+  const getErrorMessage = useCallback((errorType: ErrorState['errorType'], error?: Error): string => {
     const baseMessages = {
       network: '네트워크 연결을 확인해주세요.',
       validation: '입력 데이터를 확인해주세요.',
@@ -69,7 +69,7 @@ export function useErrorHandler(retryConfig: Partial<RetryConfig> = {}) {
     const baseMessage = baseMessages[errorType];
     
     // 개발 환경에서는 상세 에러 메시지 포함
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' && error) {
       return `${baseMessage} (${error.message})`;
     }
     
@@ -79,7 +79,7 @@ export function useErrorHandler(retryConfig: Partial<RetryConfig> = {}) {
   // 에러 처리
   const handleError = useCallback((error: Error, context?: string) => {
     const errorType = classifyError(error);
-    const message = getErrorMessage(errorType, context);
+    const message = getErrorMessage(errorType, error);
     
     const newErrorState: ErrorState = {
       hasError: true,

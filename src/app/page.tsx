@@ -384,6 +384,7 @@ export default function Home() {
               financialMetrics={financialMetrics}
               loading={loading}
               error={error}
+              userId={tempUserId}
             />
 
             {/* 월별 수입/지출 비교 차트 - 현재 월 포함 과거 6개월 데이터 */}
